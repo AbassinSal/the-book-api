@@ -20,4 +20,9 @@ public class BookController {
     List<Book> showAllBooks() {
         return repository.findAll();
     }
+
+    @GetMapping("/books/size")
+    int showNumberOfBooks() {
+        return repository.findAll().size();
+    }
 }
