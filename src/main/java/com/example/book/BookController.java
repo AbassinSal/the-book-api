@@ -15,4 +15,9 @@ public class BookController {
     Book createNewBook(@RequestBody Book newBook) {
         return repository.save(newBook);
     }
+
+    @GetMapping("/books")
+    List<Book> showAllBooks() {
+        return repository.findAll();
+    }
 }
