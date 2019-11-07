@@ -10,4 +10,9 @@ public class BookController {
     BookController(BookRepository repository) {
         this.repository = repository;
     }
+    
+    @PostMapping("/books")
+    Book createNewBook(@RequestBody Book newBook) {
+        return repository.save(newBook);
+    }
 }
