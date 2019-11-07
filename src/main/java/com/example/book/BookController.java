@@ -31,8 +31,8 @@ public class BookController {
     }
 
     @GetMapping("/books/{searchAttribute}/{searchString}")
-    List<Book> showSpecificBook(@PathVariable("searchAttribute") String searchAttribute,
-                                @PathVariable("searchString") String searchString) {
+    List<Book> showSpecificBook(@PathVariable String searchAttribute,
+                                @PathVariable String searchString) {
 
         List<Book> allBooks = repository.findAll();
         List<Book> filteredBooks = new ArrayList<>();
@@ -84,7 +84,7 @@ public class BookController {
     }
 
     @DeleteMapping("/books/{id}")
-    void deleteBook(@PathVariable Long id) {
+    void deleteBook(@PathVariable Integer id) {
         int i = 0;
         List<Book> allBooks = repository.findAll();
 
@@ -98,7 +98,7 @@ public class BookController {
         }
     }
     @PatchMapping("/books/{id}")
-    Book updateBook(@PathVariable Long id, @RequestBody Book newBook) {
+    Book updateBook(@PathVariable Integer id, @RequestBody Book newBook) {
         List<Book> allBooks = repository.findAll();
         Book chosenBook = null;
         int i = 0;
@@ -130,6 +130,22 @@ public class BookController {
         }
 
         return repository.save(chosenBook);
+    }
+
+    @PutMapping("/books/{id}")
+    Book replaceBook(@PathVariable Integer id, @RequestBody Book newBook) {
+        return repository.findById(id.toString()).map(
+                book -> {
+                    book.setTitle(newBook.getTitle());
+                    book.setPublicationDate(newBook.getPublicationDate());
+                    book.setGenre(newBook.getGenre());
+                    book.setPageNumber(newBook.getPageNumber());
+                    book.setAuthor(newBook.getAuthor());
+                    return repository.save(book);
+                }).orElseGet(() -> {
+                    newBook.setId(id);
+                    return repository.save(newBook);
+        });
     }
 }
 
