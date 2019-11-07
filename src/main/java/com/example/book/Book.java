@@ -6,13 +6,14 @@ import org.springframework.data.annotation.Id;
 @Data
 public class Book {
 
-    @Id private int id;
+    @Id
+    private int id;
 
     private String title;
     private String genre;
     private String author;
     private String publicationDate;
-    private int pageNumber;
+    private Integer pageNumber;
 
 
     public Book(String title, String genre, String author,

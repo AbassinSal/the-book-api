@@ -2,8 +2,12 @@ package com.example.book;
 
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @RestController
 public class BookController {
+
 
     private final BookRepository repository;
 
@@ -68,7 +72,7 @@ public class BookController {
         } else if (searchAttribute.equalsIgnoreCase("author")) {
             for (Book book : allBooks) {
                 i++;
-                String currentAuthor= book.getAuthor();
+                String currentAuthor = book.getAuthor();
                 if (currentAuthor.equalsIgnoreCase(searchString)) {
                     filteredBooks.add(book);
                 } else if (i >= allBooks.size() - 1 && filteredBooks.isEmpty()) {
@@ -77,6 +81,21 @@ public class BookController {
             }
         }
         return filteredBooks;
+    }
+
+    @DeleteMapping("/books/{id}")
+    void deleteBook(@PathVariable Long id) {
+        int i = 0;
+        List<Book> allBooks = repository.findAll();
+
+        for (Book book : allBooks) {
+            if (book.getId() == id) {
+                repository.delete(book);
+            } else if (i >= allBooks.size() - 1) {
+                throw new BookNotFoundException(id.toString());
+            }
+            i++;
+        }
     }
 }
 
