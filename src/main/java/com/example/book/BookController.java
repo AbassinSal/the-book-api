@@ -97,5 +97,39 @@ public class BookController {
             i++;
         }
     }
+    @PatchMapping("/books/{id}")
+    Book updateBook(@PathVariable Long id, @RequestBody Book newBook) {
+        List<Book> allBooks = repository.findAll();
+        Book chosenBook = null;
+        int i = 0;
+
+        for (Book book : allBooks) {
+            if (book.getId() == id) {
+                chosenBook = book;
+            } else if (i > allBooks.size() - 1) {
+                throw new BookNotFoundException(id.toString());
+            }
+            i++;
+        }
+        if (chosenBook != null) {
+            if (newBook.getAuthor() != null && !newBook.getAuthor().isEmpty()) {
+                chosenBook.setAuthor(newBook.getAuthor());
+            }
+            if (newBook.getGenre() != null && !newBook.getGenre().isEmpty()) {
+                chosenBook.setGenre(newBook.getGenre());
+            }
+            if (newBook.getPublicationDate() != null && !newBook.getPublicationDate().isEmpty()) {
+                chosenBook.setPublicationDate(newBook.getPublicationDate());
+            }
+            if (newBook.getTitle() != null && !newBook.getTitle().isEmpty()) {
+                chosenBook.setTitle(newBook.getTitle());
+            }
+            if (newBook.getPageNumber() != null) {
+                chosenBook.setPageNumber(newBook.getPageNumber());
+            }
+        }
+
+        return repository.save(chosenBook);
+    }
 }
 
