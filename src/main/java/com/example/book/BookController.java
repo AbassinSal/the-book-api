@@ -45,8 +45,8 @@ public class BookController {
                 String currentTitle = book.getTitle();
                 if (currentTitle.equalsIgnoreCase(searchString)) {
                     filteredBooks.add(book);
-                } else if (i >= allBooks.size() - 1 && filteredBooks.isEmpty()) {
-                    throw new BookNotFoundException(searchString);
+                } else if (i >= allBooks.size() && filteredBooks.isEmpty()) {
+                    throw new BookNotFoundException("title", searchString);
                 }
             }
         } else if (searchAttribute.equalsIgnoreCase("genre")) {
@@ -55,8 +55,8 @@ public class BookController {
                 String currentGenre = book.getGenre();
                 if (currentGenre.equalsIgnoreCase(searchString)) {
                     filteredBooks.add(book);
-                } else if (i >= allBooks.size() - 1 && filteredBooks.isEmpty()) {
-                    throw new BookNotFoundException(searchString);
+                } else if (i >= allBooks.size() && filteredBooks.isEmpty()) {
+                    throw new BookNotFoundException("genre", searchString);
                 }
             }
         } else if (searchAttribute.equalsIgnoreCase("publicationDate")) {
@@ -65,8 +65,8 @@ public class BookController {
                 String currentPublicationDate = book.getPublicationDate();
                 if (currentPublicationDate.equalsIgnoreCase(searchString)) {
                     filteredBooks.add(book);
-                } else if (i >= allBooks.size() - 1 && filteredBooks.isEmpty()) {
-                    throw new BookNotFoundException(searchString);
+                } else if (i >= allBooks.size() && filteredBooks.isEmpty()) {
+                    throw new BookNotFoundException("publicationDate",searchString);
                 }
             }
         } else if (searchAttribute.equalsIgnoreCase("author")) {
@@ -75,43 +75,26 @@ public class BookController {
                 String currentAuthor = book.getAuthor();
                 if (currentAuthor.equalsIgnoreCase(searchString)) {
                     filteredBooks.add(book);
-                } else if (i >= allBooks.size() - 1 && filteredBooks.isEmpty()) {
-                    throw new BookNotFoundException(searchString);
+                } else if (i >= allBooks.size() && filteredBooks.isEmpty()) {
+                    throw new BookNotFoundException("author", searchString);
                 }
             }
         }
         return filteredBooks;
     }
 
+
     @DeleteMapping("/books/{id}")
     void deleteBook(@PathVariable Integer id) {
-        int i = 0;
-        List<Book> allBooks = repository.findAll();
-
-        for (Book book : allBooks) {
-            if (book.getId() == id) {
-                repository.delete(book);
-            } else if (i >= allBooks.size() - 1) {
-                throw new BookNotFoundException(id.toString());
-            }
-            i++;
-        }
+        repository.deleteById(id.toString());
     }
+
     @PatchMapping("/books/{id}")
     Book updateBook(@PathVariable Integer id, @RequestBody Book newBook) {
-        List<Book> allBooks = repository.findAll();
-        Book chosenBook = null;
-        int i = 0;
+        Book chosenBook;
 
-        for (Book book : allBooks) {
-            if (book.getId() == id) {
-                chosenBook = book;
-            } else if (i > allBooks.size() - 1) {
-                throw new BookNotFoundException(id.toString());
-            }
-            i++;
-        }
-        if (chosenBook != null) {
+        if (repository.findById(id.toString()).isPresent()) {
+            chosenBook = repository.findById(id.toString()).get();
             if (newBook.getAuthor() != null && !newBook.getAuthor().isEmpty()) {
                 chosenBook.setAuthor(newBook.getAuthor());
             }
@@ -127,6 +110,8 @@ public class BookController {
             if (newBook.getPageNumber() != null) {
                 chosenBook.setPageNumber(newBook.getPageNumber());
             }
+        } else {
+            throw new BookNotFoundException("id", id.toString());
         }
 
         return repository.save(chosenBook);
@@ -143,8 +128,8 @@ public class BookController {
                     book.setAuthor(newBook.getAuthor());
                     return repository.save(book);
                 }).orElseGet(() -> {
-                    newBook.setId(id);
-                    return repository.save(newBook);
+            newBook.setId(id);
+            return repository.save(newBook);
         });
     }
 }
