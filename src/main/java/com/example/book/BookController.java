@@ -38,7 +38,6 @@ public class BookController {
         List<Book> filteredBooks = new ArrayList<>();
 
         int i = 0;
-
         if (searchAttribute.equalsIgnoreCase("title")) {
             for (Book book : allBooks) {
                 i++;
@@ -66,7 +65,7 @@ public class BookController {
                 if (currentPublicationDate.equalsIgnoreCase(searchString)) {
                     filteredBooks.add(book);
                 } else if (i >= allBooks.size() && filteredBooks.isEmpty()) {
-                    throw new BookNotFoundException("publicationDate",searchString);
+                    throw new BookNotFoundException("publicationDate", searchString);
                 }
             }
         } else if (searchAttribute.equalsIgnoreCase("author")) {
@@ -86,15 +85,15 @@ public class BookController {
 
     @DeleteMapping("/books/{id}")
     void deleteBook(@PathVariable Integer id) {
-        repository.deleteById(id.toString());
+        repository.deleteById(id);
     }
 
     @PatchMapping("/books/{id}")
     Book updateBook(@PathVariable Integer id, @RequestBody Book newBook) {
         Book chosenBook;
 
-        if (repository.findById(id.toString()).isPresent()) {
-            chosenBook = repository.findById(id.toString()).get();
+        if (repository.findById(id).isPresent()) {
+            chosenBook = repository.findById(id).get();
             if (newBook.getAuthor() != null && !newBook.getAuthor().isEmpty()) {
                 chosenBook.setAuthor(newBook.getAuthor());
             }
@@ -119,7 +118,7 @@ public class BookController {
 
     @PutMapping("/books/{id}")
     Book replaceBook(@PathVariable Integer id, @RequestBody Book newBook) {
-        return repository.findById(id.toString()).map(
+        return repository.findById(id).map(
                 book -> {
                     book.setTitle(newBook.getTitle());
                     book.setPublicationDate(newBook.getPublicationDate());
@@ -133,4 +132,3 @@ public class BookController {
         });
     }
 }
-
