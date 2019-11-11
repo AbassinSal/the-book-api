@@ -4,6 +4,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 public class BookController {
@@ -17,6 +19,7 @@ public class BookController {
 
     @PostMapping("/books")
     Book createNewBook(@RequestBody Book newBook) {
+        validatePublicationDate(newBook.getPublicationDate());
         return repository.save(newBook);
     }
 
@@ -59,6 +62,7 @@ public class BookController {
                 }
             }
         } else if (searchAttribute.equalsIgnoreCase("publicationDate")) {
+            validatePublicationDate(searchString);
             for (Book book : allBooks) {
                 i++;
                 String currentPublicationDate = book.getPublicationDate();
@@ -131,4 +135,14 @@ public class BookController {
             return repository.save(newBook);
         });
     }
+
+    private void validatePublicationDate(String searchString) {
+        Pattern pattern = Pattern.compile("^([0-2][0-9]|(3)[0-1])(\\.)(((0)[0-9])|((1)[0-2]))(\\.)\\d{4}$");
+        Matcher matcher = pattern.matcher(searchString);
+
+        if (!matcher.find()) {
+            throw new WrongFormatException();
+        }
+    }
+
 }
