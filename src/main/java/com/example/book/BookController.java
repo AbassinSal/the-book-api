@@ -4,8 +4,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @RestController
 public class BookController {
@@ -35,52 +33,47 @@ public class BookController {
 
     @GetMapping("/books/{searchAttribute}/{searchString}")
     List<Book> showSpecificBook(@PathVariable String searchAttribute, @PathVariable String searchString) {
-
         List<Book> allBooks = repository.findAll();
         List<Book> filteredBooks = new ArrayList<>();
-        int i = 0;
 
-        if (searchAttribute.equalsIgnoreCase("title")) {
-            for (Book book : allBooks) {
-                i++;
-                String currentTitle = book.getTitle();
-                if (currentTitle.equalsIgnoreCase(searchString)) {
-                    filteredBooks.add(book);
-                } else if (i >= allBooks.size() && filteredBooks.isEmpty()) {
+        switch (searchAttribute.toLowerCase()) {
+            case ("title"):
+                for (Book book : allBooks) {
+                    if (book.getTitle().equalsIgnoreCase(searchString)) {
+                        filteredBooks.add(book);
+                    }
+                }
+                if (filteredBooks.isEmpty()) {
                     throw new BookNotFoundException("title", searchString);
                 }
-            }
-        } else if (searchAttribute.equalsIgnoreCase("genre")) {
-            for (Book book : allBooks) {
-                i++;
-                String currentGenre = book.getGenre();
-                if (currentGenre.equalsIgnoreCase(searchString)) {
-                    filteredBooks.add(book);
-                } else if (i >= allBooks.size() && filteredBooks.isEmpty()) {
+            case ("genre"):
+                for (Book book : allBooks) {
+                    if (book.getGenre().equalsIgnoreCase(searchString)) {
+                        filteredBooks.add(book);
+                    }
+                }
+                if (filteredBooks.isEmpty()) {
                     throw new BookNotFoundException("genre", searchString);
                 }
-            }
-        } else if (searchAttribute.equalsIgnoreCase("publicationDate")) {
-            Validator.publicationDateValidation(searchString);
-            for (Book book : allBooks) {
-                i++;
-                String currentPublicationDate = book.getPublicationDate();
-                if (currentPublicationDate.equalsIgnoreCase(searchString)) {
-                    filteredBooks.add(book);
-                } else if (i >= allBooks.size() && filteredBooks.isEmpty()) {
+            case ("publicationdate"):
+                Validator.publicationDateValidation(searchString);
+                for (Book book : allBooks) {
+                    if (book.getPublicationDate().equalsIgnoreCase(searchString)) {
+                        filteredBooks.add(book);
+                    }
+                }
+                if (filteredBooks.isEmpty()) {
                     throw new BookNotFoundException("publicationDate", searchString);
                 }
-            }
-        } else if (searchAttribute.equalsIgnoreCase("author")) {
-            for (Book book : allBooks) {
-                i++;
-                String currentAuthor = book.getAuthor();
-                if (currentAuthor.equalsIgnoreCase(searchString)) {
-                    filteredBooks.add(book);
-                } else if (i >= allBooks.size() && filteredBooks.isEmpty()) {
+            case ("author"):
+                for (Book book : allBooks) {
+                    if (book.getAuthor().equalsIgnoreCase(searchString)) {
+                        filteredBooks.add(book);
+                    }
+                }
+                if (filteredBooks.isEmpty()) {
                     throw new BookNotFoundException("author", searchString);
                 }
-            }
         }
         return filteredBooks;
     }
@@ -104,6 +97,7 @@ public class BookController {
                 chosenBook.setGenre(newBook.getGenre());
             }
             if (newBook.getPublicationDate() != null && !newBook.getPublicationDate().isEmpty()) {
+                Validator.publicationDateValidation(newBook.getPublicationDate());
                 chosenBook.setPublicationDate(newBook.getPublicationDate());
             }
             if (newBook.getTitle() != null && !newBook.getTitle().isEmpty()) {
@@ -124,6 +118,7 @@ public class BookController {
         return repository.findById(id).map(
                 book -> {
                     book.setTitle(newBook.getTitle());
+                    Validator.publicationDateValidation(newBook.getPublicationDate());
                     book.setPublicationDate(newBook.getPublicationDate());
                     book.setGenre(newBook.getGenre());
                     book.setPageNumber(newBook.getPageNumber());
