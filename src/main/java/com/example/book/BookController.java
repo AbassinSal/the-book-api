@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 @RestController
 public class BookController {
 
-
     private final BookRepository repository;
 
     BookController(BookRepository repository) {
@@ -19,8 +18,8 @@ public class BookController {
 
     @PostMapping("/books")
     Book createNewBook(@RequestBody Book newBook) {
-        validatePublicationDate(newBook.getPublicationDate());
-        createId(newBook);
+        Validator.publicationDateValidation(newBook.getPublicationDate());
+        IdHandler.createId(newBook, repository);
         return repository.save(newBook);
     }
 
@@ -35,13 +34,12 @@ public class BookController {
     }
 
     @GetMapping("/books/{searchAttribute}/{searchString}")
-    List<Book> showSpecificBook(@PathVariable String searchAttribute,
-                                @PathVariable String searchString) {
+    List<Book> showSpecificBook(@PathVariable String searchAttribute, @PathVariable String searchString) {
 
         List<Book> allBooks = repository.findAll();
         List<Book> filteredBooks = new ArrayList<>();
-
         int i = 0;
+
         if (searchAttribute.equalsIgnoreCase("title")) {
             for (Book book : allBooks) {
                 i++;
@@ -63,7 +61,7 @@ public class BookController {
                 }
             }
         } else if (searchAttribute.equalsIgnoreCase("publicationDate")) {
-            validatePublicationDate(searchString);
+            Validator.publicationDateValidation(searchString);
             for (Book book : allBooks) {
                 i++;
                 String currentPublicationDate = book.getPublicationDate();
@@ -135,36 +133,6 @@ public class BookController {
             newBook.setId(id);
             return repository.save(newBook);
         });
-    }
-
-    private void validatePublicationDate(String searchString) {
-        Pattern pattern = Pattern.compile("^([0-2][0-9]|(3)[0-1])(\\.)(((0)[0-9])|((1)[0-2]))(\\.)\\d{4}$");
-        Matcher matcher = pattern.matcher(searchString);
-
-        if (!matcher.find()) {
-            throw new WrongFormatException();
-        }
-    }
-
-    private void createId(Book newBook) {
-        List<Book> allBooks = repository.findAll();
-        ArrayList<Integer> allIds = new ArrayList<>();
-        ArrayList<Integer> missingIds = new ArrayList<>();
-
-        for (Book book : allBooks) {
-            allIds.add(book.getId());
-        }
-        for (int i = 0; i < allIds.size(); i++) {
-            if (allIds.get(i) != i) {
-                missingIds.add(i);
-            } else {
-                Book lastBook = allBooks.get(allBooks.size()-1);
-                int lastBookId = lastBook.getId();
-                missingIds.add(lastBookId + 1);
-            }
-        }
-        newBook.setId(missingIds.get(0));
-        missingIds.remove(0);
     }
 
 }
