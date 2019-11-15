@@ -50,6 +50,7 @@ public class BookController {
         return repository.findAll().size();
     }
 
+
     @GetMapping("/books/{searchAttribute}/{searchString}")
     @ApiOperation(
             value = "Filter through all books",
@@ -68,41 +69,45 @@ public class BookController {
         switch (searchAttribute.toLowerCase()) {
             case ("title"):
                 for (Book book : allBooks) {
-                    if (book.getTitle().equalsIgnoreCase(searchString)) {
+                    if (book.getTitle().equalsIgnoreCase(searchContent)) {
                         filteredBooks.add(book);
                     }
                 }
                 if (filteredBooks.isEmpty()) {
-                    throw new BookNotFoundException("title", searchString);
+                    throw new BookNotFoundException("title", searchContent);
                 }
+                break;
             case ("genre"):
                 for (Book book : allBooks) {
-                    if (book.getGenre().equalsIgnoreCase(searchString)) {
+                    if (book.getGenre().equalsIgnoreCase(searchContent)) {
                         filteredBooks.add(book);
                     }
                 }
                 if (filteredBooks.isEmpty()) {
-                    throw new BookNotFoundException("genre", searchString);
+                    throw new BookNotFoundException("genre", searchContent);
                 }
+                break;
             case ("publicationdate"):
-                Validator.publicationDateValidation(searchString);
+                Validator.publicationDateValidation(searchContent);
                 for (Book book : allBooks) {
-                    if (book.getPublicationDate().equalsIgnoreCase(searchString)) {
+                    if (book.getPublicationDate().equalsIgnoreCase(searchContent)) {
                         filteredBooks.add(book);
                     }
                 }
                 if (filteredBooks.isEmpty()) {
-                    throw new BookNotFoundException("publicationDate", searchString);
+                    throw new BookNotFoundException("publicationDate", searchContent);
                 }
+                break;
             case ("author"):
                 for (Book book : allBooks) {
-                    if (book.getAuthor().equalsIgnoreCase(searchString)) {
+                    if (book.getAuthor().equalsIgnoreCase(searchContent)) {
                         filteredBooks.add(book);
                     }
                 }
                 if (filteredBooks.isEmpty()) {
-                    throw new BookNotFoundException("author", searchString);
+                    throw new BookNotFoundException("author", searchContent);
                 }
+                break;
         }
         return filteredBooks;
     }
