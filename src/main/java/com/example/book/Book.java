@@ -20,8 +20,12 @@ public class Book {
                 String publicationDate, int pageNumber) {
         this.title = title;
         this.genre = genre;
-        this.author = author;
+        if (author.equalsIgnoreCase("")) {
+            this.author = "Unknown";
+        } else {
+            this.author = author;
+        }
         this.publicationDate = publicationDate;
-        this. pageNumber = pageNumber;
+        this.pageNumber = pageNumber;
     }
 }
