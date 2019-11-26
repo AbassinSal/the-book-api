@@ -1,7 +1,7 @@
 package com.example.book;
 
 class BookNotFoundException extends RuntimeException{
-    BookNotFoundException(String type, String attribute) {
-        super("Could not find book with "+ type + ": " + attribute);
+    BookNotFoundException(String attribute, String content) {
+        super("Could not find book with "+ attribute + ": " + content);
     }
 }

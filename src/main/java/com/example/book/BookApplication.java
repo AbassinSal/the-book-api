@@ -38,7 +38,7 @@ public class BookApplication {
                 "An API as a introduction into Spring/Maven/Mongo",
                 "1.0",
                 "Free to use",
-                new springfox.documentation.service.Contact("Abassin Saleh", "Google.com", "a@b.com"),
+                new springfox.documentation.service.Contact("Abassin Saleh", "Google.com", "salehabassin@gmail.com"),
                 "API license",
                 "google.com",
                 Collections.emptyList());

@@ -1,17 +1,20 @@
 package com.example.book;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @ApiModel(description = "Details about the book")
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Book {
 
     @Id
-    @ApiModelProperty(notes = "The unique id, which is used to get the Book in the Database")
-    private int id;
+    @ApiModelProperty(notes = "The unique _id, which is used to get the Book in the Database")
+    private String _id;
 
     @ApiModelProperty(notes = "The title of the book")
     private String title;
@@ -22,14 +25,14 @@ public class Book {
     @ApiModelProperty(notes = "The date of the book's publication")
     private String publicationDate;
     @ApiModelProperty(notes = "The total number of pages")
-    private Integer pageNumber;
+    private String pageNumber;
 
 
     public Book(String title, String genre, String author,
-                String publicationDate, int pageNumber) {
+                String publicationDate, String pageNumber) {
         this.title = title;
         this.genre = genre;
-        if (author.equalsIgnoreCase("")) {
+        if ("".equals(author)) {
             this.author = "Unknown";
         } else {
             this.author = author;
