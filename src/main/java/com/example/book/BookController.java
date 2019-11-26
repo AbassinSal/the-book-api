@@ -2,11 +2,13 @@ package com.example.book;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 public class BookController {
@@ -19,21 +21,20 @@ public class BookController {
 
     @PostMapping("/books")
     @ApiOperation(
-            value = "Adds a Book to the database",
-            notes = "Creates an object of Type book with the ",
+            value = "Creates a new book",
+            notes = "Creates an object of Type book which is added to the Database",
             response = Book.class)
     Book createNewBook(
             @ApiParam(value = "An Object of type Book that you want to add to the Database", required = true)
             @RequestBody Book newBook) {
         Validator.publicationDateValidation(newBook.getPublicationDate());
-        IdHandler.createId(newBook, repository);
         return repository.save(newBook);
     }
 
     @GetMapping("/books")
     @ApiOperation(
             value = "Shows all books",
-            notes = "Provides a List of type Book with all books saved in the DB",
+            notes = "Provides a List of type Book with all books saved in the Database",
             response = Book.class,
             responseContainer = "List")
     List<Book> showAllBooks() {
@@ -43,18 +44,18 @@ public class BookController {
     @GetMapping("/books/size")
     @ApiOperation(
             value = "Shows the total amount of books",
-            notes = "Provides the total amount of elements saved in the DB",
-            response = int.class
+            notes = "Provides the total amount of elements saved in the Database"
     )
     int showNumberOfBooks() {
         return repository.findAll().size();
     }
 
 
-    @GetMapping("/books/{searchAttribute}/{searchString}")
+    @GetMapping("/books/{searchAttribute}/{searchContent}")
     @ApiOperation(
             value = "Filter through all books",
-            notes = "Filtering through books with help of two filtering Options, returning a List of Books with same properties",
+            notes = "Filtering through books with help of two filtering Options," +
+                    "returning a List of Books with same properties",
             response = Book.class,
             responseContainer = "List"
     )
@@ -64,26 +65,26 @@ public class BookController {
             @ApiParam(value = "The content of the attribute you're looking for", required = true)
             @PathVariable String searchContent) {
         List<Book> allBooks = repository.findAll();
-        List<Book> filteredBooks = new ArrayList<>();
+        List<Book> filtereDatabaseooks = new ArrayList<>();
 
         switch (searchAttribute.toLowerCase()) {
             case ("title"):
                 for (Book book : allBooks) {
                     if (book.getTitle().equalsIgnoreCase(searchContent)) {
-                        filteredBooks.add(book);
+                        filtereDatabaseooks.add(book);
                     }
                 }
-                if (filteredBooks.isEmpty()) {
+                if (filtereDatabaseooks.isEmpty()) {
                     throw new BookNotFoundException("title", searchContent);
                 }
                 break;
             case ("genre"):
                 for (Book book : allBooks) {
                     if (book.getGenre().equalsIgnoreCase(searchContent)) {
-                        filteredBooks.add(book);
+                        filtereDatabaseooks.add(book);
                     }
                 }
-                if (filteredBooks.isEmpty()) {
+                if (filtereDatabaseooks.isEmpty()) {
                     throw new BookNotFoundException("genre", searchContent);
                 }
                 break;
@@ -91,98 +92,35 @@ public class BookController {
                 Validator.publicationDateValidation(searchContent);
                 for (Book book : allBooks) {
                     if (book.getPublicationDate().equalsIgnoreCase(searchContent)) {
-                        filteredBooks.add(book);
+                        filtereDatabaseooks.add(book);
                     }
                 }
-                if (filteredBooks.isEmpty()) {
+                if (filtereDatabaseooks.isEmpty()) {
                     throw new BookNotFoundException("publicationDate", searchContent);
                 }
                 break;
             case ("author"):
                 for (Book book : allBooks) {
                     if (book.getAuthor().equalsIgnoreCase(searchContent)) {
-                        filteredBooks.add(book);
+                        filtereDatabaseooks.add(book);
                     }
                 }
-                if (filteredBooks.isEmpty()) {
+                if (filtereDatabaseooks.isEmpty()) {
                     throw new BookNotFoundException("author", searchContent);
                 }
                 break;
         }
-        return filteredBooks;
+        return filtereDatabaseooks;
     }
 
-
-    @DeleteMapping("/books/{id}")
+    @DeleteMapping("/books/{_id}")
     @ApiOperation(
             value = "Deletes a book",
-            notes = "An object of type book is deleted by handing over an id",
-            response = void.class
+            notes = "An object of type book is deleted by handing over an _id"
     )
     void deleteBook(
-            @ApiParam(value = "An id that's used to identify a book in the Database")
-            @PathVariable Integer id) {
+            @ApiParam(value = "An _id that's used to identify a book in the Database")
+            @PathVariable String id) {
         repository.deleteById(id);
     }
-
-    @PatchMapping("/books/{id}")
-    @ApiOperation(
-            value = "Patches attribute of a book",
-            notes = "An Object of type book is patched by handing over a RequestBody of type Book and an id",
-            response = Book.class
-    )
-    Book updateBook(
-            @ApiParam(value = "An id that's used to identify a book in the Database") @PathVariable Integer id,
-            @ApiParam(value = "An Object of type Book that you want to add to the Database") @RequestBody Book newBook) {
-        Book chosenBook;
-
-        if (repository.findById(id).isPresent()) {
-            chosenBook = repository.findById(id).get();
-            if (newBook.getAuthor() != null && !newBook.getAuthor().isEmpty()) {
-                chosenBook.setAuthor(newBook.getAuthor());
-            }
-            if (newBook.getGenre() != null && !newBook.getGenre().isEmpty()) {
-                chosenBook.setGenre(newBook.getGenre());
-            }
-            if (newBook.getPublicationDate() != null && !newBook.getPublicationDate().isEmpty()) {
-                Validator.publicationDateValidation(newBook.getPublicationDate());
-                chosenBook.setPublicationDate(newBook.getPublicationDate());
-            }
-            if (newBook.getTitle() != null && !newBook.getTitle().isEmpty()) {
-                chosenBook.setTitle(newBook.getTitle());
-            }
-            if (newBook.getPageNumber() != null) {
-                chosenBook.setPageNumber(newBook.getPageNumber());
-            }
-        } else {
-            throw new BookNotFoundException("id", id.toString());
-        }
-
-        return repository.save(chosenBook);
-    }
-
-    @PutMapping("/books/{id}")
-    @ApiOperation(
-            value = "Replaces a book",
-            notes = "The id is used to identify a book in the database, which you want to replace with the new book",
-            response = Book.class
-    )
-    Book replaceBook(
-            @ApiParam(value = "An id that's used to identify a book in the Database") @PathVariable Integer id,
-            @ApiParam(value = "An Object of type Book that you want to add to the Database") @RequestBody Book newBook) {
-        return repository.findById(id).map(
-                book -> {
-                    book.setTitle(newBook.getTitle());
-                    Validator.publicationDateValidation(newBook.getPublicationDate());
-                    book.setPublicationDate(newBook.getPublicationDate());
-                    book.setGenre(newBook.getGenre());
-                    book.setPageNumber(newBook.getPageNumber());
-                    book.setAuthor(newBook.getAuthor());
-                    return repository.save(book);
-                }).orElseGet(() -> {
-            newBook.setId(id);
-            return repository.save(newBook);
-        });
-    }
-
 }
