@@ -1,43 +1,51 @@
 package com.example.book;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 @ApiModel(description = "Details about the book")
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class Book {
+@NoArgsConstructor
+class Book {
 
     @Id
     @ApiModelProperty(notes = "The unique _id, which is used to get the Book in the Database")
     private String _id;
 
+
+    @JsonProperty(required = true)
     @ApiModelProperty(notes = "The title of the book")
     private String title;
+
+    @JsonProperty(defaultValue = "Not specified")
     @ApiModelProperty(notes = "The genre of the book")
     private String genre;
+
+    @JsonProperty(required = true)
     @ApiModelProperty(notes = "The author of the book")
     private String author;
+
+    @JsonProperty(defaultValue = "Not specified")
     @ApiModelProperty(notes = "The date of the book's publication")
     private String publicationDate;
+
+    @JsonProperty(value = "pageNumber", defaultValue = "not specified")
     @ApiModelProperty(notes = "The total number of pages")
     private String pageNumber;
 
-
-    public Book(String title, String genre, String author,
-                String publicationDate, String pageNumber) {
+    Book(String title, String genre, String author, String publicationDate, String pageNumber) {
         this.title = title;
         this.genre = genre;
-        if ("".equals(author)) {
-            this.author = "Unknown";
-        } else {
-            this.author = author;
-        }
+        this.author = author;
         this.publicationDate = publicationDate;
         this.pageNumber = pageNumber;
+    }
+
+    Book(Book book) {
+        this(book.getTitle(), book.getGenre(), book.getAuthor(), book.getPublicationDate(), book.getPageNumber());
     }
 }
