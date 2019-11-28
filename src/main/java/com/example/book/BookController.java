@@ -9,9 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,15 +30,18 @@ public class BookController {
             response = Book.class)
     public ResponseEntity<String> createNewBook(
             @ApiParam(value = "An Object of type Book that you want to add to the Database", required = true)
-            @RequestBody Book newBook) {
-        Book book = new Book(newBook);
+            @RequestBody Book book) {
+        Book newBook = new Book(book);
         try {
-            Validator.publicationDateValidation(book.getPublicationDate());
+            Validator.publicationDateValidation(newBook.getPublicationDate());
+            if (newBook.getTitle() == null || newBook.getAuthor() == null) {
+                throw new IllegalArgumentException("Title or Author is missing");
+            }
         } catch (WrongFormatException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Publication Date is not correct formatted (dd.mm.yyyy)");
         }
         try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ObjectMapper().writeValueAsString(repository.save(book)));
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ObjectMapper().writeValueAsString(repository.save(newBook)));
         } catch (JsonProcessingException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Could not parse book as json");
         }

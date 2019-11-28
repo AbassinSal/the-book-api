@@ -35,8 +35,13 @@ class BookControllerTest {
     private final List<Book> bookList = Arrays.asList(
             new Book("Sprite", "Fantasy", "Abassin Saleh", "01.01.2019", "130"),
             new Book("Fanta", "Sci-Fi", "Abassin Saleh", "01.01.1902", "10"),
-            new Book("Cider", "Kochbuch", "Abassin Saleh", "12.12.1902", "40"));
+            new Book("Cider", "Kochbuch", "Abassin Saleh", "12.12.1902", "40")
+    );
     private final Book emptyBook = new Book(null, "", null, null, null);
+
+    private final Book autoFilledEmptyBook =
+            new Book("Not specified", "Not specified", "Unknown", "Unknown", "Not Specified");
+
 
     @Autowired
     MockMvc mockMvc;
@@ -49,13 +54,12 @@ class BookControllerTest {
         when(repository.findAll()).thenReturn(bookList);
         MvcResult mvcResult = mockMvc.perform(
                 MockMvcRequestBuilders.get("/api/books")
-                        .accept(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
         ).andExpect(status().isOk()).andReturn();
 
         List<Book> returnedBooks = new ObjectMapper().readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<List<Book>>() {
-                }
+                new TypeReference<List<Book>>() {}
         );
         Assertions.assertIterableEquals(bookList, returnedBooks);
         verify(repository).findAll();
@@ -71,8 +75,7 @@ class BookControllerTest {
 
         List<Book> returnedBooks = new ObjectMapper().readValue(
                 mvcResult.getResponse().getContentAsString(),
-                new TypeReference<List<Book>>() {
-                }
+                new TypeReference<List<Book>>() {}
         );
         assertIterableEquals(Collections.emptyList(), returnedBooks);
         verify(repository).findAll();
@@ -98,7 +101,7 @@ class BookControllerTest {
     }
 
     @Test
-    void createNewBook_saveANewBook_returnsBadRequest() throws Exception {
+    void createNewBook_saveANewBook_returnsBadRequest() throws Exception{
         mockMvc.perform(
                 MockMvcRequestBuilders
                         .post("/api/books")
@@ -109,7 +112,21 @@ class BookControllerTest {
     }
 
     @Test
-    void createNewBook_saveANewBook_throwsIllegalArgumentException() {
-        assertThrows(IllegalArgumentException.class, () -> repository.save(emptyBook));
+    void createNewBook_saveANewBook_savesEmptyBook() throws Exception {
+        MvcResult mvcResult = mockMvc.perform(
+                MockMvcRequestBuilders
+                        .post("/api/books")
+                        .content(new ObjectMapper().writeValueAsString(emptyBook))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        ).andExpect(status().isCreated()).andReturn();
+
+        Book returnedBook = new ObjectMapper().readValue(
+                mvcResult.getResponse().getContentAsString(),
+                Book.class
+        );
+        assertEquals(autoFilledEmptyBook, returnedBook);
     }
+
+
 }
