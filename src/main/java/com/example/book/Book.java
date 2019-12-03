@@ -4,11 +4,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 
 @ApiModel(description = "Details about the book")
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@NoArgsConstructor
 class Book {
 
     @Id
@@ -36,8 +38,4 @@ class Book {
             this.pageNumber = pageNumber;
 
         }
-
-    Book(Book book) {
-        this(book.getTitle(), book.getGenre(), book.getAuthor(), book.getPublicationDate(), book.getPageNumber());
-    }
 }
