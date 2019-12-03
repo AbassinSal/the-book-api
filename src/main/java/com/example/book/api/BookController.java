@@ -1,5 +1,9 @@
-package com.example.book;
+package com.example.book.api;
 
+import com.example.book.persistence.BookRepository;
+import com.example.book.exception.WrongFormatException;
+import com.example.book.model.Book;
+import com.example.book.validation.Validator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,11 +29,11 @@ public class BookController {
         this.repository = repository;
     }
 
-    @PostMapping("/books")
     @ApiOperation(
             value = "Creates a new book",
             notes = "Creates an object of Type book which is added to the Database",
             response = Book.class)
+    @PostMapping("/books")
     public ResponseEntity<String> createNewBook(
             @ApiParam(value = "An Object of type Book that you want to add to the Database", required = true)
             @RequestBody Book newBook) {
@@ -50,36 +54,33 @@ public class BookController {
         }
     }
 
-    @GetMapping("/books/all")
     @ApiOperation(
             value = "Shows all books",
             notes = "Provides a List of type Book with all books saved in the Database",
             response = Book.class,
             responseContainer = "List")
+    @GetMapping("/books/all")
     public List<Book> showAllBooks() {
         return repository.findAll();
     }
 
-    @GetMapping("/books/size")
     @ApiOperation(
             value = "Shows the total amount of books",
             notes = "Provides the total amount of elements saved in the Database"
     )
+    @GetMapping("/books/size")
     public Long showNumberOfBooks() {
         return repository.count();
     }
 
-
-    @GetMapping("/books")
     @ApiOperation(
-            value = "Filter through all genres",
-            notes = "Filters all book genres," +
-                    "returning a List of Books with the same genre",
+            value = "Filter all books",
+            notes = "Filtering through all books and returning the sorted list of books.",
             response = Book.class,
             responseContainer = "List"
     )
-
-    public List<Book> filterBooks(@RequestParam(required = false) Optional<String> author,
+    @GetMapping("/books")
+    public ResponseEntity<List<Book>> filterBooks(@RequestParam(required = false) Optional<String> author,
                                   @RequestParam(required = false) Optional<String> genre,
                                   @RequestParam(required = false) Optional<String> title,
                                   @RequestParam(required = false) Optional<String> publicationDate,
@@ -94,17 +95,18 @@ public class BookController {
         } else if (publicationDate.isPresent()) {
             filteredBooks.addAll(repository.findBooksByPublicationDate(publicationDate.get()));
         } else pageNumber.ifPresent(e -> filteredBooks.addAll(repository.findBooksByPageNumber(e)));
-        return filteredBooks;
+        return ResponseEntity.ok(filteredBooks);
     }
 
-    @DeleteMapping("/books/{_id}")
     @ApiOperation(
             value = "Deletes a book",
             notes = "An object of type book is deleted by handing over an _id"
     )
-    public void deleteBook(
-            @ApiParam(value = "An _id that's used to identify a book in the Database")
+    @DeleteMapping("/books/{_id}")
+    public ResponseEntity<?> deleteBook(
+            @ApiParam(value = "An _id that's used to identify a book in the database")
             @PathVariable String _id) {
         repository.deleteById(_id);
+        return ResponseEntity.ok("{}");
     }
 }

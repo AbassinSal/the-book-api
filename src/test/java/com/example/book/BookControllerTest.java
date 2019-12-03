@@ -1,6 +1,7 @@
 package com.example.book;
 
-
+import com.example.book.model.Book;
+import com.example.book.persistence.BookRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
@@ -16,11 +17,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
+import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,52 +29,32 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest
 class BookControllerTest {
 
-    private final Book book =
-            new Book("CocaCola", "Taschenbuch", "Abassin Saleh", "12.01.2001", "120");
-    private final Book bookWrongPublicationDate =
-            new Book("PepsiMax", "Wissen", "Abassin Saleh", "99.99.2001", "110");
-    private final List<Book> bookList = Arrays.asList(
-            new Book("Sprite", "Fantasy", "Abassin", "01.01.2019", "130"),
-            new Book("Fanta", "Sci-Fi", "Hans Mustermann", "01.01.1902", "10"),
-            new Book("Cider", "Kochbuch", "Abassin Saleh", "12.12.1902", "40")
-    );
-    private final List<Book> genreFilteredList = Arrays.asList(
-            new Book("Sprite", "Fantasy", "Abassin", "01.01.2019", "130"),
-            new Book("Fanta", "Fantasy", "Abassin", "01.01.2019", "130")
-    );
-    private final List<Book> authorFilteredList = Arrays.asList(
-            new Book("Sprite", "Sci-Fi", "Abass", "01.01.2019", "130"),
-            new Book("Fanta", "Sci-Fi", "Abass", "01.01.2019", "130")
-    );
-    private final List<Book> publicationDateFilteredList = Arrays.asList(
-            new Book("Sprite", "Sci-Fi", "Abassin", "02.01.2019", "130"),
-            new Book("Fanta", "Sci-Fi", "Abassin", "02.01.2019", "130")
-    );
-    private final List<Book> titleFilteredList = Arrays.asList(
-            new Book("Fanta", "Sci-Fi", "Abassin", "02.01.2019", "130"),
-            new Book("Fanta", "Sci-Fi", "Abassin", "02.01.2019", "130")
-    );
-    private final List<Book> pageNumberFilteredList = Arrays.asList(
-            new Book("Fanta", "Sci-Fi", "Abassin", "02.01.2019", "140"),
-            new Book("Fanta", "Sci-Fi", "Abassin", "02.01.2019", "140")
-    );
-    private final List<Book> emptyList = new ArrayList<>();
-    private final Book bookWithAuthorAndTitle =
-            new Book("Kaffee", null, "Abassin Saleh", null, null);
-    private final Book emptyBook =
-            new Book(null, null, null, null, null);
-    private final Book bookWithoutAuthorAndTitle =
-            new Book(null, "Fantasy", null, "20.20.2020", "220");
-    private ObjectMapper objectMapper = new ObjectMapper();
-
     @Autowired
     MockMvc mockMvc;
 
     @MockBean
     BookRepository repository;
 
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    private Book generateBook(String title, String genre, String author, String publicationDate, String pageNumber) {
+        final Book book = new Book();
+        book.setAuthor(author);
+        book.setGenre(genre);
+        book.setPageNumber(pageNumber);
+        book.setTitle(title);
+        book.setPublicationDate(publicationDate);
+        return book;
+    }
+
     @Test
     void showAllBooks_findAllBooks_returnListOfBooksWithThreeBooks() throws Exception {
+        final List<Book> bookList = Arrays.asList(
+                generateBook("Sprite", "Fantasy", "Abassin", "01.01.2019", "130"),
+                generateBook("Fanta", "Sci-Fi", "Hans Mustermann", "01.01.1902", "10"),
+                generateBook("Cider", "Kochbuch", "Abassin Saleh", "12.12.1902", "40")
+        );
+
         when(repository.findAll()).thenReturn(bookList);
         MvcResult mvcResult = mockMvc.perform(
                 MockMvcRequestBuilders.get("/api/books/all")
@@ -92,7 +72,7 @@ class BookControllerTest {
 
     @Test
     void showAllBooks_findAllBooks_returnEmptyList() throws Exception {
-        when(repository.findAll()).thenReturn(Collections.emptyList());
+        when(repository.findAll()).thenReturn(emptyList());
         MvcResult mvcResult = mockMvc.perform(
                 MockMvcRequestBuilders
                         .get("/api/books/all")
@@ -104,12 +84,14 @@ class BookControllerTest {
                 new TypeReference<List<Book>>() {
                 }
         );
-        assertIterableEquals(Collections.emptyList(), returnedBooks);
+        assertIterableEquals(emptyList(), returnedBooks);
         verify(repository).findAll();
     }
 
     @Test
     void createNewBook_saveANewBook_newBookIsSaved() throws Exception {
+        final Book book = generateBook("Sprite", "Fantasy", "Abassin", "01.01.2019", "130");
+
         when(repository.save(book)).thenReturn(book);
         MvcResult mvcResult = mockMvc.perform(
                 MockMvcRequestBuilders
@@ -129,10 +111,12 @@ class BookControllerTest {
 
     @Test
     void createNewBook_saveANewBook_returnsBadRequestWrongPublicationDate() throws Exception {
+        final Book bookWithInvalidPublicationDate = generateBook("PepsiMax", "Wissen", "Abassin Saleh", "99.99.2001", "110");
+
         mockMvc.perform(
                 MockMvcRequestBuilders
                         .post("/api/books")
-                        .content(objectMapper.writeValueAsString(bookWrongPublicationDate))
+                        .content(objectMapper.writeValueAsString(bookWithInvalidPublicationDate))
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
@@ -140,6 +124,8 @@ class BookControllerTest {
 
     @Test
     void createNewBook_saveANewBook_savesBookWithAuthorAndTitle() throws Exception {
+        final Book bookWithAuthorAndTitle = generateBook("Hansel and Gretel", null, "Max Mustermann", null, null);
+
         when(repository.save(bookWithAuthorAndTitle)).thenReturn(bookWithAuthorAndTitle);
         MvcResult mvcResult = mockMvc.perform(
                 MockMvcRequestBuilders
@@ -158,6 +144,8 @@ class BookControllerTest {
 
     @Test
     void createNewBook_saveANewBook_returnsBadRequestEmptyBook() throws Exception {
+        final Book emptyBook = new Book();
+
         mockMvc.perform(
                 MockMvcRequestBuilders
                         .post("/api/books")
@@ -169,6 +157,8 @@ class BookControllerTest {
 
     @Test
     void createNewBook_saveANewBook_returnsBadRequestBookWithoutAuthorAndTitle() throws Exception {
+        final Book bookWithoutAuthorAndTitle = generateBook(null, "Fantasy", null, "20.20.2020", "220");
+
         mockMvc.perform(
                 MockMvcRequestBuilders
                         .post("/api/books")
@@ -204,7 +194,12 @@ class BookControllerTest {
 
     @Test
     void filterBooks_getABookWithGenreFantasy_returnsBookWithGenreFantasy() throws Exception {
-        when(repository.findBooksByGenre("Fantasy")).thenReturn(genreFilteredList);
+        final List<Book> bookList = Arrays.asList(
+                generateBook("Sprite", "Fantasy", "Abassin", "01.01.2019", "130"),
+                generateBook("Fanta", "Fantasy", "Hans Mustermann", "01.01.1902", "10")
+        );
+
+        when(repository.findBooksByGenre("Fantasy")).thenReturn(bookList);
         MvcResult mvcResult = mockMvc.perform(
                 MockMvcRequestBuilders
                         .get("/api/books?genre=Fantasy")
@@ -216,11 +211,16 @@ class BookControllerTest {
                 new TypeReference<List<Book>>() {
                 }
         );
-        assertEquals(genreFilteredList, returnedBooks);
+        assertEquals(bookList, returnedBooks);
     }
 
     @Test
     void filterBooks_getABookWithAuthorAbassin_returnsBookWithAuthorAbassin() throws Exception {
+        final List<Book> authorFilteredList = Arrays.asList(
+                generateBook("Sprite", "Sci-Fi", "Abass", "01.01.2019", "130"),
+                generateBook("Fanta", "Sci-Fi", "Abass", "01.01.2019", "130")
+        );
+
         when(repository.findBooksByAuthor("Abass")).thenReturn(authorFilteredList);
 
         MvcResult mvcResult = mockMvc.perform(
@@ -239,7 +239,7 @@ class BookControllerTest {
 
     @Test
     void filterBooks_getABookWithAuthorNotExistingAuthor_returnsEmptyList() throws Exception {
-        when(repository.findBooksByGenre("bread")).thenReturn(emptyList);
+        when(repository.findBooksByGenre("bread")).thenReturn(emptyList());
 
         MvcResult mvcResult = mockMvc.perform(
                 MockMvcRequestBuilders
@@ -252,12 +252,17 @@ class BookControllerTest {
                 new TypeReference<List<Book>>() {
                 }
         );
-        assertEquals(emptyList, returnedBooks);
+        assertEquals(emptyList(), returnedBooks);
 
     }
 
     @Test
     void filterBooks_getABookWithSpecificPublicationDate_returnsBookWithSpecificPublicationDate() throws Exception {
+        final List<Book> publicationDateFilteredList = Arrays.asList(
+                generateBook("Sprite", "Sci-Fi", "Abassin", "02.01.2019", "130"),
+                generateBook("Fanta", "Sci-Fi", "Abassin", "02.01.2019", "130")
+        );
+
         when(repository.findBooksByPublicationDate("01.01.2019")).thenReturn(publicationDateFilteredList);
 
         MvcResult mvcResult = mockMvc.perform(
@@ -274,40 +279,49 @@ class BookControllerTest {
         assertEquals(publicationDateFilteredList, returnedBooks);
     }
 
-   @Test
-   void filterBooks_getABookWithTitleFanta_returnsBookWithTitleFanta() throws Exception {
-        when(repository.findBooksByTitle("Fanta")).thenReturn(titleFilteredList);
+    @Test
+    void filterBooks_getABookWithTitleFanta_returnsBookWithTitleFanta() throws Exception {
+        final List<Book> publicationDateFilteredList = Arrays.asList(
+                generateBook("Fanta", "Sci-Fi", "Abassin", "02.01.2019", "130"),
+                generateBook("Fanta", "Sci-Fi", "Abassin", "02.01.2019", "130")
+        );
 
-       MvcResult mvcResult = mockMvc.perform(
-               MockMvcRequestBuilders
-                       .get("/api/books?title=Fanta")
-                       .accept(MediaType.APPLICATION_JSON)
-       ).andExpect(status().isOk()).andReturn();
+        when(repository.findBooksByTitle("Fanta")).thenReturn(publicationDateFilteredList);
 
-       List<Book> returnedBooks = objectMapper.readValue(
-               mvcResult.getResponse().getContentAsString(),
-               new TypeReference<List<Book>>() {
-               }
-       );
-       assertEquals(titleFilteredList, returnedBooks);
-   }
+        MvcResult mvcResult = mockMvc.perform(
+                MockMvcRequestBuilders
+                        .get("/api/books?title=Fanta")
+                        .accept(MediaType.APPLICATION_JSON)
+        ).andExpect(status().isOk()).andReturn();
 
-   @Test
-   void filterBooks_getABookWithpageNumber_returnsBookWithPageNumber() throws Exception {
-        when(repository.findBooksByPageNumber("140")).thenReturn(pageNumberFilteredList);
+        List<Book> returnedBooks = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                new TypeReference<List<Book>>() {
+                }
+        );
+        assertEquals(publicationDateFilteredList, returnedBooks);
+    }
 
-       MvcResult mvcResult = mockMvc.perform(
-               MockMvcRequestBuilders
-                       .get("/api/books?pageNumber=140")
-                       .accept(MediaType.APPLICATION_JSON)
-       ).andExpect(status().isOk()).andReturn();
+    @Test
+    void filterBooks_getABookWithpageNumber_returnsBookWithPageNumber() throws Exception {
+        final List<Book> publicationDateFilteredList = Arrays.asList(
+                generateBook("Fanta", "Sci-Fi", "Abassin", "02.01.2019", "140"),
+                generateBook("Fanta", "Sci-Fi", "Abassin", "02.01.2019", "140")
+        );
 
-       List<Book> returnedBooks = objectMapper.readValue(
-               mvcResult.getResponse().getContentAsString(),
-               new TypeReference<List<Book>>() {
-               }
-       );
-       assertEquals(pageNumberFilteredList, returnedBooks);
-   }
+        when(repository.findBooksByPageNumber("140")).thenReturn(publicationDateFilteredList);
 
+        MvcResult mvcResult = mockMvc.perform(
+                MockMvcRequestBuilders
+                        .get("/api/books?pageNumber=140")
+                        .accept(MediaType.APPLICATION_JSON)
+        ).andExpect(status().isOk()).andReturn();
+
+        List<Book> returnedBooks = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(),
+                new TypeReference<List<Book>>() {
+                }
+        );
+        assertEquals(publicationDateFilteredList, returnedBooks);
+    }
 }

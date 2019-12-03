@@ -16,7 +16,6 @@ import java.util.Collections;
 @SpringBootApplication
 public class BookApplication {
 
-
     public static void main(String[] args) {
         SpringApplication.run(BookApplication.class, args);
     }
@@ -29,7 +28,6 @@ public class BookApplication {
                 .apis(RequestHandlerSelectors.basePackage("com.example"))
                 .build()
                 .apiInfo(apiDetails());
-
     }
 
     private ApiInfo apiDetails() {
