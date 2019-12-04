@@ -3,7 +3,9 @@ package com.example.book.api;
 import com.example.book.persistence.BookRepository;
 import com.example.book.exception.WrongFormatException;
 import com.example.book.model.Book;
+import com.example.book.service.BookService;
 import com.example.book.validation.Validator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +15,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,11 +24,11 @@ import java.util.Optional;
 @RequestMapping("/api")
 public class BookController {
 
-    private final BookRepository repository;
+    @Autowired
+    private BookRepository repository;
 
-    private BookController(BookRepository repository) {
-        this.repository = repository;
-    }
+    @Autowired
+    private BookService bookService;
 
     @ApiOperation(
             value = "Creates a new book",
@@ -81,20 +82,11 @@ public class BookController {
     )
     @GetMapping("/books")
     public ResponseEntity<List<Book>> filterBooks(@RequestParam(required = false) Optional<String> author,
-                                  @RequestParam(required = false) Optional<String> genre,
-                                  @RequestParam(required = false) Optional<String> title,
-                                  @RequestParam(required = false) Optional<String> publicationDate,
-                                  @RequestParam(required = false) Optional<String> pageNumber) {
-        List<Book> filteredBooks = new ArrayList<>();
-        if (author.isPresent()) {
-            filteredBooks.addAll(repository.findBooksByAuthor(author.get()));
-        } else if (genre.isPresent()) {
-            filteredBooks.addAll(repository.findBooksByGenre(genre.get()));
-        } else if (title.isPresent()) {
-            filteredBooks.addAll(repository.findBooksByTitle(title.get()));
-        } else if (publicationDate.isPresent()) {
-            filteredBooks.addAll(repository.findBooksByPublicationDate(publicationDate.get()));
-        } else pageNumber.ifPresent(e -> filteredBooks.addAll(repository.findBooksByPageNumber(e)));
+                                                  @RequestParam(required = false) Optional<String> genre,
+                                                  @RequestParam(required = false) Optional<String> title,
+                                                  @RequestParam(required = false) Optional<String> publicationDate,
+                                                  @RequestParam(required = false) Optional<String> pageNumber) {
+        final List<Book> filteredBooks = bookService.filterBooksWith(author, genre, title, publicationDate, pageNumber);
         return ResponseEntity.ok(filteredBooks);
     }
 
