@@ -16,7 +16,6 @@ public class BookService {
     @Autowired
     private BookRepository repository;
 
-
     public List<Book> filterBooksWith(Optional<String> author,
                                       Optional<String> genre,
                                       Optional<String> title,
