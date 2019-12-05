@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 
+import javax.validation.constraints.Pattern;
+
 @ApiModel(description = "Details about the book")
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -27,6 +29,7 @@ public class Book {
     private String author;
 
     @ApiModelProperty(notes = "The date of the book's publication")
+    @Pattern(regexp = "^([0-2][0-9]|(3)[0-1])(\\.)(((0)[0-9])|((1)[0-2]))(\\.)\\d{4}$", message = "Publication Date is not correct formatted (dd.mm.yyyy)")
     private String publicationDate;
 
     @ApiModelProperty(notes = "The total number of pages")

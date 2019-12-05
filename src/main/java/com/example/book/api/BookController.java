@@ -1,10 +1,8 @@
 package com.example.book.api;
 
-import com.example.book.exception.WrongFormatException;
 import com.example.book.model.Book;
 import com.example.book.persistence.BookRepository;
 import com.example.book.service.BookService;
-import com.example.book.validation.Validator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiOperation;
@@ -22,38 +20,40 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 @Slf4j
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1/books")
 @ComponentScan("com.example.book")
 public class BookController {
 
-    @Autowired
-    private BookRepository repository;
+    private final BookRepository repository;
+
+    private final BookService bookService;
 
     @Autowired
-    private BookService bookService;
+    public BookController(BookRepository repository, BookService bookService) {
+        this.repository = repository;
+        this.bookService = bookService;
+    }
+
 
     @ApiOperation(
             value = "Creates a new book",
             notes = "Creates an object of Type book which is added to the Database",
             response = Book.class)
-    @PostMapping("/books")
+    @PostMapping
     public ResponseEntity<String> createNewBook(
             @ApiParam(value = "An Object of type Book that you want to add to the Database", required = true)
-            @RequestBody Book newBook) {
+            @Valid @RequestBody Book newBook) {
         if (newBook.getTitle() == null || newBook.getAuthor() == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Author or Title is missing");
-        }
-        try {
-            Validator.publicationDateValidation(newBook.getPublicationDate());
-        } catch (WrongFormatException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Publication Date is not correct formatted (dd.mm.yyyy)");
         }
         try {
             Book testBook = repository.save(newBook);
@@ -69,18 +69,18 @@ public class BookController {
             notes = "Provides a List of type Book with all books saved in the Database",
             response = Book.class,
             responseContainer = "List")
-    @GetMapping("/books/all")
-    public List<Book> showAllBooks() {
-        return repository.findAll();
+    @GetMapping("/all")
+    public ResponseEntity<List<Book>> showAllBooks() {
+        return ResponseEntity.ok(repository.findAll());
     }
 
     @ApiOperation(
             value = "Shows the total amount of books",
             notes = "Provides the total amount of elements saved in the Database"
     )
-    @GetMapping("/books/size")
-    public Long showNumberOfBooks() {
-        return repository.count();
+    @GetMapping("/size")
+    public ResponseEntity<Long> showNumberOfBooks() {
+        return ResponseEntity.ok(repository.count());
     }
 
     @ApiOperation(
@@ -89,12 +89,15 @@ public class BookController {
             response = Book.class,
             responseContainer = "List"
     )
-    @GetMapping("/books")
+    @GetMapping
     public ResponseEntity<List<Book>> filterBooks(@RequestParam(required = false) Optional<String> author,
                                                   @RequestParam(required = false) Optional<String> genre,
                                                   @RequestParam(required = false) Optional<String> title,
                                                   @RequestParam(required = false) Optional<String> publicationDate,
                                                   @RequestParam(required = false) Optional<String> pageNumber) {
+        if (!author.isPresent() && !genre.isPresent() && !title.isPresent() && !publicationDate.isPresent() && !pageNumber.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parameter is invalid or not supplied");
+        }
         final List<Book> filteredBooks = bookService.filterBooksWith(author, genre, title, publicationDate, pageNumber);
         return ResponseEntity.ok(filteredBooks);
     }
@@ -103,7 +106,7 @@ public class BookController {
             value = "Deletes a book",
             notes = "An object of type book is deleted by handing over an _id"
     )
-    @DeleteMapping("/books/{_id}")
+    @DeleteMapping("/{_id}")
     public ResponseEntity<?> deleteBook(
             @ApiParam(value = "An _id that's used to identify a book in the database")
             @PathVariable String _id) {
